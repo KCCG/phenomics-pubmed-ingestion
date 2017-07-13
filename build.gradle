@@ -1,0 +1,34 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(
+            'com.amazonaws:aws-lambda-java-core:1.1.0',
+            'com.amazonaws:aws-lambda-java-events:1.3.0',
+            'com.amazonaws:aws-lambda-java-log4j:1.0.0',
+            'com.cloudinary:cloudinary-http44:1.8.0',
+            'com.google.guava:guava:21.0',
+            'org.projectlombok:lombok:1.16.14',
+            'com.squareup.okhttp3:okhttp:3.6.0',
+            'org.json:json:20160212',
+            'commons-io:commons-io:2.5'
+    )
+}
+
+task buildZip(type: Zip) {
+    version = "build-" + new Date().format("yyyyMMdd-HHmmss");
+    baseName = "pubmed-ingestion-lambda"
+    ext.gitrev = "git rev-parse HEAD".execute().text.trim()
+
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtime
+    }
+}
+
+build.dependsOn buildZip
