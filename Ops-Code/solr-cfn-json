@@ -1,0 +1,187 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Apache Solr Template",
+  "Resources": {
+    "SolrSecurityGroup": {
+      "Properties": {
+        "VpcId": "vpc-1a2c177f",
+        "GroupDescription": "EC2 Solr SSH access",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIp": "149.0.0.0/8"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 80,
+            "ToPort": 80,
+            "CidrIp": "149.0.0.0/8"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 8983,
+            "ToPort": 8983,
+            "CidrIp": "149.0.0.0/8"
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "PhenomicsResearch"
+          },
+          {
+            "Key": "App",
+            "Value": "Pubmed-Ingestion"
+          },
+          {
+            "Key": "Contact",
+            "Value": "Ahmed"
+          }
+        ]
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "SolrRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    },
+    "SolrInstanceProfile": {
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "SolrRole"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::InstanceProfile"
+    },
+    "SolrInstance": {
+      "Properties": {
+        "KeyName": "phenomics-research",
+        "ImageId": "ami-37706c54",
+        "InstanceType": "t2.small",
+        "IamInstanceProfile": {
+          "Ref": "SolrInstanceProfile"
+        },
+        "SecurityGroupIds": [
+          {
+            "Ref": "SolrSecurityGroup"
+          }
+        ],
+        "SubnetId": "subnet-70e62314",
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/xvda",
+            "Ebs": {
+              "VolumeSize": 20
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "PhenomicsResearch"
+          },
+          {
+            "Key": "App",
+            "Value": "Pubmed-Ingestion"
+          },
+          {
+            "Key": "Contact",
+            "Value": "Ahmed"
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -x\n\nset -e\n\n/opt/aws/bin/cfn-init -v --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource SolrInstance --configsets InstallAndRun --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Authentication": {
+        },
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Configure"
+            ]
+          },
+          "Configure": {
+            "commands": {
+              "010_start_app": {
+                "command": "sudo -u ec2-user /opt/solr/bin/solr start -c && sleep 40"
+              },
+              "020_start_app2": {
+                "command": "sudo -u ec2-user /opt/solr/bin/solr create -c Articles"
+              }
+            }
+          }
+        }
+      },
+      "Type": "AWS::EC2::Instance"
+    },
+    "SolrSearchDns": {
+      "Properties": {
+        "HostedZoneName": "phenomics.awsinternal.",
+        "Name": "solr-pubmed.phenomics.awsinternal.",
+        "Type": "A",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "SolrInstance",
+              "PublicIp"
+            ]
+          }
+        ]
+      },
+      "Type": "AWS::Route53::RecordSet"
+    }
+  },
+  "Outputs": {
+    "SecurityGroup": {
+      "Value": {
+        "Fn::GetAtt": [
+          "SolrSecurityGroup",
+          "GroupId"
+        ]
+      }
+    }
+  }
+}

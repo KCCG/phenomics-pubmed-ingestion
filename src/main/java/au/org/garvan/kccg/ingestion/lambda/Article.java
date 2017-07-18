@@ -1,4 +1,4 @@
-package main.java;
+package au.org.garvan.kccg.ingestion.lambda;
 
 import jdk.nashorn.internal.objects.annotations.Property;
 import lombok.Getter;
