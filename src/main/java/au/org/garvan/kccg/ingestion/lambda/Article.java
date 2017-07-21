@@ -72,6 +72,8 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("ArticleDate")){
                 articleDate = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("ArticleDate"));
             }
+            else
+                articleDate = LocalDate.now();
 
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated"))
             {
@@ -94,15 +96,25 @@ public class Article {
         }
         catch (JSONException e)
         {
-            System.out.print(String.format("JSON Error in Article ID:%s\n Exception: %s",PMID,e.toString()));
+            System.out.println(String.format("JSON Error in Article ID:%s\n Exception: %s",PMID,e.toString()));
         }
         catch (ClassCastException e)
         {
-            System.out.print(String.format("Cast Error in Article ID:%s\n Exception: %s",PMID,e.toString()));
+            System.out.println(String.format("Cast Error in Article ID:%s\n Exception: %s",PMID,e.toString()));
 
         }
 
 
+
+    }
+
+    public Article(int PMID, LocalDate articleDate, String articleTitle, String articleAbstract, String language,  Boolean isComplete){
+        this.PMID = PMID ;
+        this.articleDate = articleDate;
+        this.articleTitle = articleTitle;
+        this.articleAbstract = articleAbstract;;
+        this.language = language;
+        this.isComplete = isComplete;
 
     }
 

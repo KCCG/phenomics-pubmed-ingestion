@@ -33,12 +33,6 @@ public class DownloaderTest {
         Assert.assertEquals(result, "OK");
     }
 
-
-
-
-
-
-
     private Context buildContext() {
         return
                 new Context() {

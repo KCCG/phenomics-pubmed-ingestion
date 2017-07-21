@@ -148,7 +148,10 @@
                 "command": "sudo -u ec2-user /opt/solr/bin/solr start -c && sleep 40"
               },
               "020_start_app2": {
-                "command": "sudo -u ec2-user /opt/solr/bin/solr create -c Articles"
+                "command": "sudo -u ec2-user /opt/solr/bin/solr create -c Articles && sleep 5"
+              },
+              "030_test_document": {
+                "command": "sudo -u ec2-user curl -H \"Content-Type: application/json\" -X POST -d '{\"PMID\":\"0\"}' http://localhost:8983/solr/Articles/update/json/docs?commit=true"
               }
             }
           }
