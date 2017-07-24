@@ -27,13 +27,13 @@ dependencies {
 task buildZip(type: Zip) {
     version = "build-" + new Date().format("yyyyMMdd-HHmmss");
     baseName = "pubmed-ingestion-lambda"
-    ext.gitrev = "git rev-parse HEAD".execute().text.trim()
 
     from compileJava
     from processResources
     into('lib') {
         from configurations.runtime
     }
+   println baseName + "-" + version + ".zip"
 }
 
 build.dependsOn buildZip
