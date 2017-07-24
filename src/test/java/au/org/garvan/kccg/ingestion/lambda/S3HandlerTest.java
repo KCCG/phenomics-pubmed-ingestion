@@ -1,7 +1,6 @@
 package au.org.garvan.kccg.ingestion.lambda;
 
 import org.junit.Before;
-import org.junit.Test;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,10 +24,10 @@ public class S3HandlerTest {
     }
 
 
-    @Test
-    public void archiveArticles() throws Exception {
-        S3Handler.archiveArticles(testArticles);
-    }
+//    @Test
+//    public void archiveArticles() throws Exception {
+//        S3Handler.archiveArticles(testArticles);
+//    }
 
 
 }
