@@ -9,6 +9,7 @@
 *.jar
 *.pyc
 *.json
+!Ops-Code/*.json
 
 
 logs/

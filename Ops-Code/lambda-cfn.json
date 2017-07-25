@@ -1,0 +1,150 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "PubmedIngestionLambda": {
+      "Properties": {
+        "Code": {
+          "S3Bucket": "phenomics-artifacts",
+          "S3Key": "pubmed-ingestion-lambda-build-20170724-110701.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PubmedIngestionLambdaRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 300,
+        "Handler": "au.org.garvan.kccg.ingestion.lambda.Downloader",
+        "FunctionName": "pubmed-ingestion-lambda",
+        "Runtime": "java8",
+        "MemorySize": 256,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "PhenomicsResearch"
+          },
+          {
+            "Key": "App",
+            "Value": "Pubmed-Ingestion"
+          },
+          {
+            "Key": "Contact",
+            "Value": "Ahmed"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "ENV": "AWS",
+            "S3_BUCKET": "phenomics-pubmed-articles",
+            "REGION": "ap-southeast-2",
+            "DAYS": "2",
+            "PERSIST_IN_SOLR": "true",
+            "PERSIST_IN_S3": "true"
+          }
+        },
+        "VpcConfig": {
+          "SubnetIds": [
+            "subnet-ae605aca"
+          ],
+          "SecurityGroupIds": [
+            "sg-c4a9fca0"
+          ]
+        }
+      },
+      "Type": "AWS::Lambda::Function"
+    },
+    "PubmedIngestionLambdaScheduleRule": {
+      "Properties": {
+        "Description": "ScheduledRule",
+        "ScheduleExpression": "cron(0 0 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "PubmedIngestionLambda",
+                "Arn"
+              ]
+            },
+            "Id": "TargetFunctionV1"
+          }
+        ]
+      },
+      "Type": "AWS::Events::Rule"
+    },
+    "PermissionForEventsToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "PubmedIngestionLambda"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "PubmedIngestionLambdaScheduleRule",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "PubmedIngestionLambdaRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "PubmedIngestionLambdaPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DeleteNetworkInterface"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": [
+                    "arn:aws:logs:*:*:*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    }
+  }
+}
