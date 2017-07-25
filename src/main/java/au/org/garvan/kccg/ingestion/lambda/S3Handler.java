@@ -46,7 +46,7 @@ public class S3Handler {
     public static long getEpoch() {
         LocalDateTime ldt = LocalDateTime.now();
         ZonedDateTime zdt = ldt.atZone(ZoneId.of("Australia/Sydney"));
-        return zdt.toInstant().getEpochSecond();
+        return zdt.toInstant().toEpochMilli();
 
     }
 
