@@ -115,8 +115,14 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
             if (response.code() == 200) {
                 JSONObject jsonObject = XML.toJSONObject(response.body().string().trim());
-                JSONArray articles = jsonObject.getJSONObject("PubmedArticleSet").getJSONArray("PubmedArticle");
+                JSONArray articles;
 
+                if (batch.size()>1)
+                    articles = jsonObject.getJSONObject("PubmedArticleSet").getJSONArray("PubmedArticle");
+                else {
+                    articles = new JSONArray();
+                    articles.put(jsonObject.getJSONObject("PubmedArticleSet").getJSONObject("PubmedArticle"));
+                }
 
                 collectedArticles.addAll(constructArticles(articles));
             }
