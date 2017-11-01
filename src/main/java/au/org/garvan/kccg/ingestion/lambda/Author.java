@@ -3,7 +3,6 @@ package au.org.garvan.kccg.ingestion.lambda;
 import jdk.nashorn.internal.objects.annotations.Property;
 import lombok.Getter;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ public class Author {
 
   public String constructJson()
   {
-      return String.format("{ Initials: %s , Forname : %s , LastName: %s }", initials,foreName, lastName );
+      return String.format("{ Initials: %s , Forename : %s , LastName: %s }", initials,foreName, lastName );
   }
 
 }
