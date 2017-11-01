@@ -51,9 +51,13 @@ public class Author {
         }
     }
 
-  public String constructJson()
+  public JSONObject constructJson()
   {
-      return String.format("{ Initials: %s , Forename : %s , LastName: %s }", initials,foreName, lastName );
+      JSONObject author = new JSONObject();
+      author.put("initials", initials);
+      author.put("foreName", foreName);
+      author.put("lastName", lastName);
+      return author;
   }
 
 }
