@@ -51,7 +51,7 @@ public class ConfigLoader {
 
         if (PERSIST_IN_SOLR == null) {
 
-            PERSIST_IN_SOLR = System.getenv("PERSIST_IN_SOLR") == "false" ? Boolean.FALSE : Boolean.TRUE;
+            PERSIST_IN_SOLR = System.getenv("PERSIST_IN_SOLR") == "false"  ? Boolean.FALSE : Boolean.TRUE;
         }
         return PERSIST_IN_SOLR;
     }
@@ -60,7 +60,7 @@ public class ConfigLoader {
 
         if (PERSIST_IN_S3 == null) {
 
-            PERSIST_IN_S3 = System.getenv("PERSIST_IN_S3") == "false" ? Boolean.FALSE : Boolean.TRUE;
+            PERSIST_IN_S3 = System.getenv("PERSIST_IN_S3") == "false" || System.getenv("PERSIST_IN_S3") == null  ? Boolean.FALSE : Boolean.FALSE;
         }
         return PERSIST_IN_S3;
     }
