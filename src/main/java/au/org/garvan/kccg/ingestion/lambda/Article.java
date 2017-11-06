@@ -170,7 +170,7 @@ public class Article {
             JSONArray authorsArray = new JSONArray();
             for (Author a: authors)
                 authorsArray.put(a.constructJson());
-            jsonObject.put("authors", authorsArray.toString());
+            jsonObject.put("authors", authorsArray);
         }
 
         jsonObject.put("dateCreatedEpoch", dateCreated != null ? dateCreated.toEpochDay() : LocalDate.now().toEpochDay());
