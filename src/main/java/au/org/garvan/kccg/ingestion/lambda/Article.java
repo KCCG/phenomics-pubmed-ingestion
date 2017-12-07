@@ -57,7 +57,14 @@ public class Article {
 
             PMID = (int) inputObject.getJSONObject("MedlineCitation").getJSONObject("PMID").get("content");
             articleTitle = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("ArticleTitle");
-            language = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
+
+            Object lang = inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
+            if (lang instanceof JSONArray )
+            {
+                language= ((JSONArray)lang).get(0).toString();
+            }
+            else
+                language = lang.toString();
 
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("AuthorList")) {
                 authors = constructAuthors(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("AuthorList"));
@@ -120,11 +127,10 @@ public class Article {
         Object obj = jsonAbstract.get("AbstractText");
 
         if (obj instanceof JSONArray) {
-
             for (Object innerObj : (JSONArray) obj) {
                 if (innerObj instanceof JSONObject) {
-                    finalAbstract = finalAbstract.concat((String) ((JSONObject) innerObj).get("content"));
-
+                    if (((JSONObject) innerObj).has("content"))
+                        finalAbstract = finalAbstract.concat((String) ((JSONObject) innerObj).get("content"));
                 } else if (innerObj instanceof String) {
                     finalAbstract = finalAbstract.concat(innerObj.toString());
                 }
@@ -133,7 +139,6 @@ public class Article {
         } else if (obj instanceof String) {
             finalAbstract = obj.toString();
         }
-
         return finalAbstract;
 
     }

@@ -69,14 +69,10 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 List<String> articleIDs = new ArrayList<>();
                 jsonObject.getJSONObject("esearchresult").getJSONArray("idlist").forEach(x -> articleIDs.add(x.toString()));
 
-
                 System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
 
-                //Point: HACK
-                List<String> dummyArticleIds = articleIDs.subList(0,10);
-                List<String> dedupedArticleIDs = SolrHandler.deduplicateArticles(dummyArticleIds);
+                List<String> dedupedArticleIDs = SolrHandler.deduplicateArticles(articleIDs);
 
-                //
                 System.out.println(String.format("Total de-duplicated items count: %d.", dedupedArticleIDs.size()));
                 if (dedupedArticleIDs.size()>0)
                     processArticles(dedupedArticleIDs);
