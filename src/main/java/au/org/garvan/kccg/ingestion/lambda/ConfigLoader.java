@@ -14,6 +14,10 @@ public class ConfigLoader {
     private static String DAYS;
     private static Boolean PERSIST_IN_SOLR = null;
     private static Boolean PERSIST_IN_S3 = null;
+    private static Boolean SEND_TO_PIPELINE = null;
+    private static String PIPELINE_ENDPOINT;
+
+
 
     public static String getENV() {
         if (Strings.isNullOrEmpty(ENV)) {
@@ -47,11 +51,17 @@ public class ConfigLoader {
         return Strings.isNullOrEmpty(DAYS) ? "2" : DAYS;
     }
 
+    public static String getPipelineEndpoint() {
+        if (Strings.isNullOrEmpty(PIPELINE_ENDPOINT)) {
+            PIPELINE_ENDPOINT = System.getenv("PIPELINE_ENDPOINT");
+        }
+        return PIPELINE_ENDPOINT;
+    }
+
     public static boolean shouldPersistInSolr() {
 
         if (PERSIST_IN_SOLR == null) {
-
-            PERSIST_IN_SOLR = System.getenv("PERSIST_IN_SOLR") == "false"  ? Boolean.FALSE : Boolean.TRUE;
+            PERSIST_IN_SOLR = System.getenv("PERSIST_IN_SOLR").equals("true")  ? Boolean.TRUE : Boolean.FALSE;
         }
         return PERSIST_IN_SOLR;
     }
@@ -59,10 +69,17 @@ public class ConfigLoader {
     public static boolean shouldPersistInS3() {
 
         if (PERSIST_IN_S3 == null) {
-
-            PERSIST_IN_S3 = System.getenv("PERSIST_IN_S3") == "false" || System.getenv("PERSIST_IN_S3") == null  ? Boolean.FALSE : Boolean.FALSE;
+            PERSIST_IN_S3 = System.getenv("PERSIST_IN_S3").equals("true") ? Boolean.TRUE : Boolean.FALSE;
         }
         return PERSIST_IN_S3;
     }
+    public static boolean shouldSendToPipeline () {
+
+        if (SEND_TO_PIPELINE == null) {
+            SEND_TO_PIPELINE = System.getenv("SEND_TO_PIPELINE").equals("true")  ? Boolean.TRUE : Boolean.FALSE;
+        }
+        return SEND_TO_PIPELINE;
+    }
+
 
 }

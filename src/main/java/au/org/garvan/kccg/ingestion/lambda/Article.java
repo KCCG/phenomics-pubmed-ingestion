@@ -1,5 +1,6 @@
 package au.org.garvan.kccg.ingestion.lambda;
 
+import com.google.common.base.Strings;
 import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,7 +58,14 @@ public class Article {
 
             PMID = (int) inputObject.getJSONObject("MedlineCitation").getJSONObject("PMID").get("content");
             articleTitle = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("ArticleTitle");
-            language = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
+
+            Object lang = inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
+            if (lang instanceof JSONArray )
+            {
+                language= ((JSONArray)lang).get(0).toString();
+            }
+            else
+                language = lang.toString();
 
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("AuthorList")) {
                 authors = constructAuthors(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("AuthorList"));
@@ -71,7 +79,10 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated")) {
                 dateCreated = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateCreated"));
             }
-
+            else {
+                // As date created is vanished from response so it is safe to assume article date as date created.
+                dateCreated = articleDate;
+            }
             if (inputObject.getJSONObject("MedlineCitation").has("DateRevised")) {
                 dateRevised = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateRevised"));
             }
@@ -84,8 +95,9 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
                 publication = new Publication(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal"));
             }
-
-            isComplete = Boolean.TRUE;
+            PMID = PMID +20000;
+            if (!Strings.isNullOrEmpty(articleAbstract))
+                isComplete = Boolean.TRUE;
 
         } catch (JSONException e) {
             System.out.println(String.format("JSON Error in Article ID:%s\n Exception: %s", PMID, e.toString()));
@@ -120,11 +132,10 @@ public class Article {
         Object obj = jsonAbstract.get("AbstractText");
 
         if (obj instanceof JSONArray) {
-
             for (Object innerObj : (JSONArray) obj) {
                 if (innerObj instanceof JSONObject) {
-                    finalAbstract = finalAbstract.concat((String) ((JSONObject) innerObj).get("content"));
-
+                    if (((JSONObject) innerObj).has("content"))
+                        finalAbstract = finalAbstract.concat((String) ((JSONObject) innerObj).get("content"));
                 } else if (innerObj instanceof String) {
                     finalAbstract = finalAbstract.concat(innerObj.toString());
                 }
@@ -133,7 +144,6 @@ public class Article {
         } else if (obj instanceof String) {
             finalAbstract = obj.toString();
         }
-
         return finalAbstract;
 
     }

@@ -1,12 +1,13 @@
 package au.org.garvan.kccg.ingestion.lambda;
 
-import com.amazonaws.services.lambda.runtime.*;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.google.common.collect.Lists;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
-import java.io.FileWriter;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,17 +29,14 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
     private static String searchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
     private static String fetchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
 
-
-
     public static void main (String [] args) throws IOException {
 
     }
 
 
-
     @Override
     public String handleRequest(Map<String,Object> input, Context context) {
-        System.out.println("Lambda Initialized");
+        System.out.println("Lambda Initialized. ");
 
         HttpUrl.Builder httpBuider = HttpUrl.parse(searchURL).newBuilder();
         HashMap<String, String> params = getSearchParams();
@@ -54,7 +52,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
         Response response;
         try {
-            System.out.println("Calling pubmed for ID List.");
+            System.out.println( String.format("Calling pubmed for ID List. Request config is:%s", request.url().toString()));
             response = CLIENT.newCall(request).execute();
             System.out.println(String.format("Got response from Pubmed, response code: %d.", response.code()));
 
@@ -68,18 +66,10 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 //TODO: Check count and limit and make a call again
                 List<String> articleIDs = new ArrayList<>();
                 jsonObject.getJSONObject("esearchresult").getJSONArray("idlist").forEach(x -> articleIDs.add(x.toString()));
-
-
                 System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
 
-                //Point: HACK
-                List<String> dummyArticleIds = articleIDs.subList(0,10);
-                List<String> dedupedArticleIDs = SolrHandler.deduplicateArticles(dummyArticleIds);
-
-                //
-                System.out.println(String.format("Total de-duplicated items count: %d.", dedupedArticleIDs.size()));
-                if (dedupedArticleIDs.size()>0)
-                    processArticles(dedupedArticleIDs);
+                if (articleIDs.size()>0)
+                    processArticles(articleIDs);
             }
 
         } catch (IOException e) {
@@ -93,16 +83,18 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
 
     private static void processArticles(List<String> articleIDs) throws IOException {
-        System.out.println(String.format("Processing articles."));
+        System.out.println(String.format("Processing articles. Received total for today:%d", articleIDs.size()));
 
-        List<Article> collectedArticles = new ArrayList<>();
-        // Split articles in batch to optimize calls
+        // Split articles in batch to optimize processing
         List<List<String>> batchSplits = Lists.partition(articleIDs, BATCH_SIZE);
-
         System.out.println(String.format("Processing articles in batches. Batch size: %d and Total Batches %d", BATCH_SIZE, batchSplits.size()));
 
-
+        int batchId = 1;
         for (List<String> batch : batchSplits) {
+
+            System.out.println(String.format("Processing started for batch: %d", batchId));
+
+            List<Article> collectedArticles = new ArrayList<>();
             HttpUrl.Builder httpBuider = HttpUrl.parse(fetchURL).newBuilder();
             HashMap<String, String> params = getFetchParams(batch);
             if (params != null) {
@@ -130,35 +122,49 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 }
 
                 collectedArticles.addAll(constructArticles(articles));
+                //Find articles which are complete in nature and can ber persisted
+                List<Article> cleanedArticles = collectedArticles.stream().filter(ar-> ar.getIsComplete()).collect(Collectors.toList());
+                System.out.println(String.format("Total complete items for batch:%d are: %d.",batchId, cleanedArticles.size()));
+
+                if(ConfigLoader.shouldSendToPipeline()) {
+                    System.out.println(String.format("Calling Pipeline for batch:%d.",batchId));
+                    PipelineHandler.postArticles(cleanedArticles);
+
+                }
+
+                if(ConfigLoader.shouldPersistInSolr()) {
+                    System.out.println(String.format("Calling Solr for batch:%d.",batchId));
+                    SolrHandler.postArticles(cleanedArticles);
+                }
+
+                if(ConfigLoader.shouldPersistInS3()){
+                    System.out.println(String.format("Calling S3 for batch:%d.",batchId));
+                    S3Handler.archiveArticles(cleanedArticles);
+                }
+
             }
-        }
+            batchId++;
 
-        //Find articles which are complete in nature and can ber persisted
-        List<Article> cleanedArticles = collectedArticles.stream().filter(ar-> ar.getIsComplete()).collect(Collectors.toList());
+        }// Batch loop
 
-        System.out.println(String.format("Total complete items count: %d.", cleanedArticles.size()));
-
-        if(ConfigLoader.shouldPersistInS3())
-            S3Handler.archiveArticles(cleanedArticles);
-
-        if(ConfigLoader.shouldPersistInSolr())
-            SolrHandler.postArticles(cleanedArticles);
 
     }
 
+
+    public static void callWithID(List<String> articleIDs){
+        try {
+            processArticles(articleIDs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private static List<Article> constructArticles(JSONArray jsonArticles) {
         List<Article> constructedArticles = new ArrayList<>();
         jsonArticles.forEach(x -> constructedArticles.add(new Article((JSONObject) x)));
         return constructedArticles;
 
-    }
-
-
-    private static void jsonDump(JSONObject jObj, String fileName) throws IOException {
-        FileWriter fileWriter = new FileWriter(fileName);
-        fileWriter.write(jObj.toString());
-        fileWriter.close();
     }
 
     private static HashMap getSearchParams() {
