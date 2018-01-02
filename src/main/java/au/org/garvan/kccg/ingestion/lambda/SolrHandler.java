@@ -64,11 +64,10 @@ public class SolrHandler {
     }
 
     public static void postArticles(List<Article> finalArticles) throws IOException {
-
         List<List<Article>> batchSplits = Lists.partition(finalArticles, 100);
-        int batchID = 0;
+        int batchID = 1;
         for (List<Article> anArticleList : batchSplits) {
-            System.out.println(String.format("Posting batch to solr. Batch IDL :%d", batchID));
+            System.out.println(String.format("Posting to SOLR. Solr-Batch Id:%d", batchID));
             // Create new batch client to avoid connection lost from Solr
             OkHttpClient batchClient = new OkHttpClient.Builder()
                     .retryOnConnectionFailure(true)

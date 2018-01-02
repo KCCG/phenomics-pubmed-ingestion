@@ -3,7 +3,6 @@ package au.org.garvan.kccg.ingestion.lambda;
 import com.amazonaws.services.lambda.runtime.ClientContext;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
-
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +31,12 @@ public class DownloaderTest {
         String result = testD.handleRequest(new HashMap<>(), buildContext());
         Assert.assertEquals(result, "OK");
     }
+
+//    @Test
+//    public void callWithID() throws Exception {
+//        Downloader.callWithID(Arrays.asList("29216712"));
+//    }
+
 
     private Context buildContext() {
         return

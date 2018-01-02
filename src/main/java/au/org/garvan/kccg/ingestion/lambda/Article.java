@@ -1,5 +1,6 @@
 package au.org.garvan.kccg.ingestion.lambda;
 
+import com.google.common.base.Strings;
 import lombok.Getter;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -78,7 +79,10 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated")) {
                 dateCreated = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateCreated"));
             }
-
+            else {
+                // As date created is vanished from response so it is safe to assume article date as date created.
+                dateCreated = articleDate;
+            }
             if (inputObject.getJSONObject("MedlineCitation").has("DateRevised")) {
                 dateRevised = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateRevised"));
             }
@@ -91,8 +95,9 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
                 publication = new Publication(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal"));
             }
-
-            isComplete = Boolean.TRUE;
+            PMID = PMID +20000;
+            if (!Strings.isNullOrEmpty(articleAbstract))
+                isComplete = Boolean.TRUE;
 
         } catch (JSONException e) {
             System.out.println(String.format("JSON Error in Article ID:%s\n Exception: %s", PMID, e.toString()));
