@@ -95,7 +95,6 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
                 publication = new Publication(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal"));
             }
-            PMID = PMID +20000;
             if (!Strings.isNullOrEmpty(articleAbstract))
                 isComplete = Boolean.TRUE;
 
