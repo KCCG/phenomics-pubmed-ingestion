@@ -12,6 +12,7 @@ public class ConfigLoader {
     private static String S3_BUCKET;
     private static String REGION;
     private static String DAYS;
+    private static Integer BATCH_SIZE = 250;
     private static Boolean PERSIST_IN_SOLR = null;
     private static Boolean PERSIST_IN_S3 = null;
     private static Boolean SEND_TO_PIPELINE = null;
@@ -49,6 +50,21 @@ public class ConfigLoader {
         }
 
         return Strings.isNullOrEmpty(DAYS) ? "2" : DAYS;
+    }
+
+
+    public static Integer getBATCHSIZE() {
+        String bSize=  System.getenv("BATCH_SIZE");
+        if(bSize !=null)
+            try {
+                BATCH_SIZE = Integer.parseInt(bSize);
+            }
+            catch (Exception e){
+                System.out.println(String.format("Invalid Integer as batch size:%s", bSize));
+
+            }
+        return BATCH_SIZE;
+
     }
 
     public static String getPipelineEndpoint() {
