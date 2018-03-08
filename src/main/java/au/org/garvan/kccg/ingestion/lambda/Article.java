@@ -44,6 +44,8 @@ public class Article {
 
     @Getter
     private List<Author> authors;
+    @Getter
+    private List<MeshHeading> meshHeadingList;
 
     @Getter
     private Publication publication;
@@ -95,6 +97,13 @@ public class Article {
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
                 publication = new Publication(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal"));
             }
+
+            if (inputObject.getJSONObject("MedlineCitation").has("MeshHeadingList")) {
+                meshHeadingList = constructMeshHeadings(inputObject.getJSONObject("MedlineCitation").getJSONObject("MeshHeadingList"));
+            }
+
+
+
             if (!Strings.isNullOrEmpty(articleAbstract))
                 isComplete = Boolean.TRUE;
 
@@ -133,8 +142,18 @@ public class Article {
         if (obj instanceof JSONArray) {
             for (Object innerObj : (JSONArray) obj) {
                 if (innerObj instanceof JSONObject) {
-                    if (((JSONObject) innerObj).has("content"))
-                        finalAbstract = finalAbstract.concat((String) ((JSONObject) innerObj).get("content"));
+                    if (((JSONObject) innerObj).has("content")){
+                        Object deepObject = ((JSONObject) innerObj).get("content");
+                        if(deepObject instanceof String)
+                            finalAbstract = finalAbstract.concat((String) deepObject);
+                        else if(deepObject instanceof JSONArray){
+                            String deepString ="";
+                            for(Object partialSent:(JSONArray) deepObject ){
+                                deepString = deepString.concat((String)partialSent);
+                            }
+                            finalAbstract = finalAbstract.concat((String) deepString);
+                        }
+                    }
                 } else if (innerObj instanceof String) {
                     finalAbstract = finalAbstract.concat(innerObj.toString());
                 }
@@ -163,6 +182,22 @@ public class Article {
 
     }
 
+private List<MeshHeading> constructMeshHeadings(JSONObject jsonMeshHeadingList) {
+        Object obj = jsonMeshHeadingList.get("MeshHeading");
+        if (obj instanceof JSONArray) {
+            return StreamSupport.stream(jsonMeshHeadingList.getJSONArray("MeshHeading").spliterator(), false)
+                    .map(JSONObject.class::cast)
+                    .map(x -> new MeshHeading(x)).collect(Collectors.toList());
+
+        } else if (obj instanceof JSONObject) {
+            return Arrays.asList(new MeshHeading((JSONObject) obj));
+
+        }
+
+        return new ArrayList<>();
+
+    }
+
     public JSONObject constructJsonObject() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("PMID", PMID);
@@ -181,6 +216,16 @@ public class Article {
                 authorsArray.put(a.constructJson());
             jsonObject.put("authors", authorsArray);
         }
+
+        if(meshHeadingList != null)
+        {
+            JSONArray meshArray = new JSONArray();
+            for (MeshHeading m: meshHeadingList)
+                meshArray.put(m.constructJson());
+            jsonObject.put("meshHeadingList", meshArray);
+        }
+
+
 
         jsonObject.put("dateCreatedEpoch", dateCreated != null ? dateCreated.toEpochDay() : LocalDate.now().toEpochDay());
         return jsonObject;
