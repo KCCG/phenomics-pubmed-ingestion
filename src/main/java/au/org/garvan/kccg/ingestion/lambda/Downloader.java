@@ -24,7 +24,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
             .writeTimeout(300L, TimeUnit.SECONDS)
             .readTimeout(300L, TimeUnit.SECONDS)
             .build();
-    private static int BATCH_SIZE = 500;
+//    private static int BATCH_SIZE = 500;
     private static int FETCH_SIZE = 50000;
     private static String searchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
     private static String fetchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
@@ -86,8 +86,8 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
         System.out.println(String.format("Processing articles. Received total for today:%d", articleIDs.size()));
 
         // Split articles in batch to optimize processing
-        List<List<String>> batchSplits = Lists.partition(articleIDs, BATCH_SIZE);
-        System.out.println(String.format("Processing articles in batches. Batch size: %d and Total Batches %d", BATCH_SIZE, batchSplits.size()));
+        List<List<String>> batchSplits = Lists.partition(articleIDs, ConfigLoader.getBATCHSIZE());
+        System.out.println(String.format("Processing articles in batches. Batch size: %d and Total Batches %d", ConfigLoader.getBATCHSIZE(), batchSplits.size()));
 
         int batchId = 1;
         for (List<String> batch : batchSplits) {
@@ -111,6 +111,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
             Response response = CLIENT.newCall(request).execute();
 
             if (response.code() == 200) {
+                System.out.println(String.format("Successful response for batch: %d", batchId));
                 JSONObject jsonObject = XML.toJSONObject(response.body().string().trim());
                 JSONArray articles;
 
@@ -141,6 +142,11 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                     System.out.println(String.format("Calling S3 for batch:%d.",batchId));
                     S3Handler.archiveArticles(cleanedArticles);
                 }
+
+            }
+            else
+            {
+                System.out.println(String.format("Un-Successful response for batch: %d - Response code %d and message:%s", batchId, response.code(), response.message()));
 
             }
             batchId++;

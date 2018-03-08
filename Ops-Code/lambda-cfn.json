@@ -5,7 +5,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "phenomics-artifacts",
-          "S3Key": "pubmed-ingestion-lambda-build-20171211-165403.zip"
+          "S3Key": "pubmed-ingestion-lambda-build-20180308-133947.zip"
         },
         "Role": {
           "Fn::GetAtt": [
@@ -38,6 +38,7 @@
             "S3_BUCKET": "phenomics-pubmed-articles",
             "REGION": "ap-southeast-2",
             "DAYS": "2",
+            "BATCH_SIZE": "250",
             "SEND_TO_PIPELINE": "true",
             "PERSIST_IN_SOLR": "true",
             "PERSIST_IN_S3": "false",
