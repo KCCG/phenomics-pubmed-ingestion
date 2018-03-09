@@ -1,21 +1,21 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {
-    "PubmedIngestionLambda": {
+    "PubmedIngestionWorkerLambda": {
       "Properties": {
         "Code": {
           "S3Bucket": "phenomics-artifacts",
-          "S3Key": "pubmed-ingestion-lambda-build-20180308-133947.zip"
+          "S3Key": "pubmed-ingestion-worker-lambda-build-20180309-142026.zip"
         },
         "Role": {
           "Fn::GetAtt": [
-            "PubmedIngestionLambdaRole",
+            "PubmedIngestionWorkerLambdaRole",
             "Arn"
           ]
         },
         "Timeout": 300,
         "Handler": "au.org.garvan.kccg.ingestion.lambda.Downloader",
-        "FunctionName": "pubmed-ingestion-lambda",
+        "FunctionName": "pubmed-ingestion-worker-lambda",
         "Runtime": "java8",
         "MemorySize": 256,
         "Tags": [
@@ -42,7 +42,9 @@
             "SEND_TO_PIPELINE": "true",
             "PERSIST_IN_SOLR": "true",
             "PERSIST_IN_S3": "false",
-            "PIPELINE_ENDPOINT": "http://pipeline-dev.phenomics.awsinternal"
+            "PIPELINE_ENDPOINT": "http://pipeline-dev.phenomics.awsinternal",
+            "WORKER_CONFIG_TABLE_NAME": "worker-config",
+            "TOTAL_WORKERS":"8"
 
           }
         },
@@ -57,42 +59,7 @@
       },
       "Type": "AWS::Lambda::Function"
     },
-    "PubmedIngestionLambdaScheduleRule": {
-      "Properties": {
-        "Description": "ScheduledRule",
-        "ScheduleExpression": "cron(0 0 * * ? *)",
-        "State": "ENABLED",
-        "Targets": [
-          {
-            "Arn": {
-              "Fn::GetAtt": [
-                "PubmedIngestionLambda",
-                "Arn"
-              ]
-            },
-            "Id": "TargetFunctionV1"
-          }
-        ]
-      },
-      "Type": "AWS::Events::Rule"
-    },
-    "PermissionForEventsToInvokeLambda": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "PubmedIngestionLambda"
-        },
-        "Action": "lambda:InvokeFunction",
-        "Principal": "events.amazonaws.com",
-        "SourceArn": {
-          "Fn::GetAtt": [
-            "PubmedIngestionLambdaScheduleRule",
-            "Arn"
-          ]
-        }
-      }
-    },
-    "PubmedIngestionLambdaRole": {
+    "PubmedIngestionWorkerLambdaRole": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -112,7 +79,7 @@
         "Path": "/",
         "Policies": [
           {
-            "PolicyName": "PubmedIngestionLambdaPolicy",
+            "PolicyName": "PubmedIngestionWorkerLambdaPolicy",
             "PolicyDocument": {
               "Statement": [
                 {
@@ -128,6 +95,13 @@
                   "Effect": "Allow",
                   "Action": [
                     "s3:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:*"
                   ],
                   "Resource": "*"
                 },

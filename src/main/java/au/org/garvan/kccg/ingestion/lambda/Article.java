@@ -137,7 +137,8 @@ public class Article {
 
             if (!Strings.isNullOrEmpty(articleAbstract))
                 isComplete = Boolean.TRUE;
-            else {
+            else
+            {
                 System.out.println(String.format("Abstract missing in Article ID:%s", PMID));
 
             }

@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.json.XML;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,6 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
             .writeTimeout(300L, TimeUnit.SECONDS)
             .readTimeout(300L, TimeUnit.SECONDS)
             .build();
-//    private static int BATCH_SIZE = 500;
     private static int FETCH_SIZE = 50000;
     private static String searchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
     private static String fetchURL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
@@ -36,44 +36,34 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
     @Override
     public String handleRequest(Map<String,Object> input, Context context) {
-        System.out.println("Lambda Initialized. ");
+        String workerID=input.get("workerID").toString();
+        System.out.println(String.format("WorkerID:%s. Lambda initialized.", workerID));
 
-        HttpUrl.Builder httpBuider = HttpUrl.parse(searchURL).newBuilder();
-        HashMap<String, String> params = getSearchParams();
-        if (params != null) {
-            for (Map.Entry<String, String> param : params.entrySet()) {
-                httpBuider.addQueryParameter(param.getKey(), param.getValue());
-            }
-        }
-        Request request = new Request.Builder()
-                .get()
-                .url(httpBuider.build().url())
-                .build();
-
-        Response response;
         try {
-            System.out.println( String.format("Calling pubmed for ID List. Request config is:%s", request.url().toString()));
-            response = CLIENT.newCall(request).execute();
-            System.out.println(String.format("Got response from Pubmed, response code: %d.", response.code()));
 
-            if(response.code()==200) {
+            System.out.println( String.format("WorkerID:%s. Getting configs for calling worker.", workerID));
+            Map<String, Object> workerConfig=  DynamoDBHandler.getSubscription(workerID);
 
-                JSONObject jsonObject = new JSONObject(response.body().string().trim());
+            if((Boolean)workerConfig.get(Constants.IS_ACTIVE)){
+                PipelineHandler.updatePort((String)workerConfig.get(Constants.PIPELINE_PORT));
 
-                String totalCount = jsonObject.getJSONObject("esearchresult").get("count").toString();
-                System.out.println(String.format("Total items count from Pubmed: %s.", totalCount.toString()));
+                List<String> articleIDs;
+                BigDecimal lastPMID = (BigDecimal) workerConfig.get(Constants.LAST_PMID_LABEL);
+                Integer startingPMID = lastPMID.intValue();
+                System.out.println(String.format("WorkerID:%s. Last Article ID: %d.", workerID, startingPMID));
 
-                //TODO: Check count and limit and make a call again
-                List<String> articleIDs = new ArrayList<>();
-                jsonObject.getJSONObject("esearchresult").getJSONArray("idlist").forEach(x -> articleIDs.add(x.toString()));
-                System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
+                Pair<Integer,List<String>> currentRunValues = makeIDListForThisRun(startingPMID);
+                articleIDs = currentRunValues.getSecond();
+                System.out.println(String.format("WorkerID:%s. Total Article IDs: %d.", workerID, articleIDs.size()));
+                if (articleIDs.size()>0){
+                    Boolean result =  processArticles(articleIDs, workerID);
+                    if(result)
+                        DynamoDBHandler.updateLastID(workerID,currentRunValues.getFirst());
+                }
 
-                if (articleIDs.size()>0)
-                    processArticles(articleIDs);
             }
-
         } catch (IOException e) {
-            System.out.println(String.format("Exception in lambda  %s.", e.toString()));
+            System.out.println(String.format("WorkerID:%s. Exception in lambda  %s.", workerID, e.toString()));
         }
 
 
@@ -82,17 +72,17 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
 
 
-    private static void processArticles(List<String> articleIDs) throws IOException {
-        System.out.println(String.format("Processing articles. Received total for today:%d", articleIDs.size()));
+    private static boolean processArticles(List<String> articleIDs, String workerID) throws IOException {
+        System.out.println(String.format("WorkerID:%s. Processing articles. Received total for today:%d",workerID, articleIDs.size()));
 
         // Split articles in batch to optimize processing
         List<List<String>> batchSplits = Lists.partition(articleIDs, ConfigLoader.getBATCHSIZE());
-        System.out.println(String.format("Processing articles in batches. Batch size: %d and Total Batches %d", ConfigLoader.getBATCHSIZE(), batchSplits.size()));
+        System.out.println(String.format("WorkerID:%s. Processing articles in batches. Batch size: %d and Total Batches %d", workerID, ConfigLoader.getBATCHSIZE(), batchSplits.size()));
 
         int batchId = 1;
         for (List<String> batch : batchSplits) {
 
-            System.out.println(String.format("Processing started for batch: %d", batchId));
+            System.out.println(String.format("WorkerID:%s. Processing started for batch: %d",workerID, batchId));
 
             List<Article> collectedArticles = new ArrayList<>();
             HttpUrl.Builder httpBuider = HttpUrl.parse(fetchURL).newBuilder();
@@ -111,7 +101,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
             Response response = CLIENT.newCall(request).execute();
 
             if (response.code() == 200) {
-                System.out.println(String.format("Successful response for batch: %d", batchId));
+                System.out.println(String.format("WorkerID:%s. Successful response for batch: %d",workerID, batchId));
                 JSONObject jsonObject = XML.toJSONObject(response.body().string().trim());
                 JSONArray articles;
 
@@ -121,15 +111,17 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                     articles = new JSONArray();
                     articles.put(jsonObject.getJSONObject("PubmedArticleSet").getJSONObject("PubmedArticle"));
                 }
-
+                System.out.println(String.format("WorkerID:%s. Total received articles: %d",workerID, articles.length()));
                 collectedArticles.addAll(constructArticles(articles));
                 //Find articles which are complete in nature and can ber persisted
                 List<Article> cleanedArticles = collectedArticles.stream().filter(ar-> ar.getIsComplete()).collect(Collectors.toList());
-                System.out.println(String.format("Total complete items for batch:%d are: %d.",batchId, cleanedArticles.size()));
+                System.out.println(String.format("WorkerID:%s. Total complete items for batch:%d are: %d.",workerID, batchId, cleanedArticles.size()));
 
                 if(ConfigLoader.shouldSendToPipeline()) {
-                    System.out.println(String.format("Calling Pipeline for batch:%d.",batchId));
-                    PipelineHandler.postArticles(cleanedArticles);
+                    System.out.println(String.format("WorkerID:%s. Calling Pipeline for batch:%d.",workerID, batchId));
+                    if(!PipelineHandler.postArticles(cleanedArticles, workerID))
+                        return false;
+
 
                 }
 
@@ -144,18 +136,31 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
         }// Batch loop
 
-
+        return true;
     }
 
+    private static Pair<Integer ,List<String>> makeIDListForThisRun(Integer startingId){
 
-    public static void callWithID(List<String> articleIDs){
-        try {
-            processArticles(articleIDs);
-        } catch (IOException e) {
-            e.printStackTrace();
+        //Skip IDs as per total number of workers
+        Integer skipStep = ConfigLoader.getNumberOfWorkers();
+        Integer batchSize = ConfigLoader.getBATCHSIZE();
+
+        Integer lastID = startingId;
+        Integer tempID = startingId;
+        List<Integer> generatedIDs = new ArrayList<>();
+
+        for(int x = 0; x<batchSize; x++){
+            tempID = tempID - skipStep;
+            if (tempID>0)
+                generatedIDs.add(tempID);
+            else
+                break;
         }
-
+        lastID = generatedIDs.get(generatedIDs.size()-1);
+        Pair<Integer, List<String>> returnObject = new Pair<>(lastID, generatedIDs.stream().map(x->x.toString()).collect(Collectors.toList()));
+        return returnObject;
     }
+
 
     private static List<Article> constructArticles(JSONArray jsonArticles) {
         List<Article> constructedArticles = new ArrayList<>();

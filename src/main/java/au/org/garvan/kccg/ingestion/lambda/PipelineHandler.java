@@ -17,7 +17,10 @@ public class PipelineHandler {
     private static String pipelineEndpoint = getPipelineURL();
     private static String submitQuery = "/articles";
 
-    public static void postArticles(List<Article> finalArticles) throws IOException {
+    public static void updatePort(String workerPort){
+        port = ":"+ workerPort;
+    }
+    public static boolean postArticles(List<Article> finalArticles, String workerID) throws IOException {
 
             OkHttpClient batchClient = new OkHttpClient.Builder()
                     .retryOnConnectionFailure(true)
@@ -38,15 +41,18 @@ public class PipelineHandler {
                         .url(httpBuilder.build().url())
                         .build();
 
-                System.out.println(String.format("Dispatching articles to pipeline."));
+                System.out.println(String.format("WorkerID:%s. Dispatching articles to pipeline.", workerID));
                 Response response = batchClient.newCall(request).execute();
-                System.out.println(String.format("Batch submitted with status code: %d", response.code()));
+                System.out.println(String.format("WorkerID:%s. Batch submitted with status code: %d", workerID,  response.code()));
 
             } catch (SocketException e) {
-                System.out.println(String.format("Socket exception when posting articles to pipeline.\n Exception: %s", e.toString()));
+                System.out.println(String.format("WorkerID:%s. Socket exception when posting articles to pipeline.\n Exception: %s", workerID, e.toString()));
+                return false;
             } catch (IOException ex) {
-                System.out.println(String.format("IO exception when posting articles to pipeline.\n Exception: %s", ex.toString()));
+                System.out.println(String.format("WorkerID:%s. IO exception when posting articles to pipeline.\n Exception: %s",workerID, ex.toString()));
+                return false;
             }
+            return true;
 
     }
 
