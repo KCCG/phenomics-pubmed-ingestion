@@ -29,7 +29,8 @@ public class DownloaderTest {
     @Test
     public void handleRequest() {
         HashMap<String, Object> input = new HashMap<>();
-        input.put(Constants.WORKER_ID, "worker0");
+        input.put(Constants.WORKER_ID, "0");
+        input.put(Constants.IGNITION_CALL, false);
         String result = testD.handleRequest(input, buildContext());
         Assert.assertEquals(result, "OK");
     }

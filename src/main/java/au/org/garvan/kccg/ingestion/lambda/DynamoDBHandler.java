@@ -33,7 +33,7 @@ public class DynamoDBHandler {
     }
 
 
-    public static boolean updateLastID(String id, Integer lastID ) {
+    public static boolean updateLastID(String id, Integer lastID, Long timeStamp ) {
         Map<String,AttributeValue> key = new HashMap<>();
         key.put(Constants.WORKER_ID,new AttributeValue().withS(id));
 
@@ -41,7 +41,9 @@ public class DynamoDBHandler {
                 .withTableName(workerConfigTableName)
                 .withKey(key)
                 .addAttributeUpdatesEntry(Constants.LAST_PMID_LABEL,
-                        new AttributeValueUpdate().withValue(new AttributeValue().withN(String.valueOf(lastID))));
+                        new AttributeValueUpdate().withValue(new AttributeValue().withN(String.valueOf(lastID))))
+                .addAttributeUpdatesEntry(Constants.LAST_UPDATE_TIME,
+                        new AttributeValueUpdate().withValue(new AttributeValue().withN(String.valueOf(timeStamp))));
         UpdateItemResult updateItemResult = client.updateItem(updateItemRequest);
         return true;
     }
