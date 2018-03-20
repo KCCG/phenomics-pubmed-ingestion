@@ -96,6 +96,7 @@ public class Article {
                 dateRevised = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateRevised"));
             }
 
+
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("ArticleDate")) {
                 articleDate = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("ArticleDate"));
             } else if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
@@ -105,9 +106,10 @@ public class Article {
                     }
 
                 }
-            } else
+                }
                 articleDate = dateRevised;
 
+                articleDate = dateRevised;
 
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated")) {
                 dateCreated = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateCreated"));

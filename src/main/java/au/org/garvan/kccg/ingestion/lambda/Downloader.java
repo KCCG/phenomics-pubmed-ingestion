@@ -74,7 +74,7 @@ public class Downloader implements RequestHandler<Map<String, Object>, String> {
                 if (Strings.isNullOrEmpty(jsonObject.get("PubmedArticleSet").toString())) {
                     System.out.println(String.format("WorkerID:%s. No Article found in response: %d", workerID, batchId));
                     articles = new JSONArray();
-                } else if (batch.size() > 1)
+                } else if (batch.size() > 1 &&  jsonObject.getJSONObject("PubmedArticleSet").get("PubmedArticle") instanceof JSONArray )
                     articles = jsonObject.getJSONObject("PubmedArticleSet").getJSONArray("PubmedArticle");
                 else {
                     articles = new JSONArray();
