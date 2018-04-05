@@ -81,11 +81,9 @@ public class Article {
             }
 
             Object lang = inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
-            if (lang instanceof JSONArray )
-            {
-                language= ((JSONArray)lang).get(0).toString();
-            }
-            else
+            if (lang instanceof JSONArray) {
+                language = ((JSONArray) lang).get(0).toString();
+            } else
                 language = lang.toString();
 
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("AuthorList")) {
@@ -106,15 +104,13 @@ public class Article {
                     }
 
                 }
-                }
-                articleDate = dateRevised;
+            } else
 
                 articleDate = dateRevised;
 
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated")) {
                 dateCreated = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateCreated"));
-            }
-            else {
+            } else {
                 // As date created is vanished from response so it is safe to assume article date as date created.
                 dateCreated = articleDate;
             }
@@ -139,8 +135,7 @@ public class Article {
 
             if (!Strings.isNullOrEmpty(articleAbstract))
                 isComplete = Boolean.TRUE;
-            else
-            {
+            else {
                 System.out.println(String.format("Abstract missing in Article ID:%s", PMID));
 
             }
@@ -245,7 +240,7 @@ public class Article {
 
     }
 
-private List<MeshHeading> constructMeshHeadings(JSONObject jsonMeshHeadingList) {
+    private List<MeshHeading> constructMeshHeadings(JSONObject jsonMeshHeadingList) {
         Object obj = jsonMeshHeadingList.get("MeshHeading");
         if (obj instanceof JSONArray) {
             return StreamSupport.stream(jsonMeshHeadingList.getJSONArray("MeshHeading").spliterator(), false)
@@ -272,22 +267,19 @@ private List<MeshHeading> constructMeshHeadings(JSONObject jsonMeshHeadingList) 
         jsonObject.put("language", language);
         jsonObject.put("publication", publication.constructJson());
 
-        if(authors != null)
-        {
+        if (authors != null) {
             JSONArray authorsArray = new JSONArray();
-            for (Author a: authors)
+            for (Author a : authors)
                 authorsArray.put(a.constructJson());
             jsonObject.put("authors", authorsArray);
         }
 
-        if(meshHeadingList != null)
-        {
+        if (meshHeadingList != null) {
             JSONArray meshArray = new JSONArray();
-            for (MeshHeading m: meshHeadingList)
+            for (MeshHeading m : meshHeadingList)
                 meshArray.put(m.constructJson());
             jsonObject.put("meshHeadingList", meshArray);
         }
-
 
 
         jsonObject.put("dateCreatedEpoch", dateCreated != null ? dateCreated.toEpochDay() : LocalDate.now().toEpochDay());

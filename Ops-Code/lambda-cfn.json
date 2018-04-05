@@ -1,120 +1,120 @@
-  {
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Resources": {
-      "PubmedIngestionWorkerLambda": {
-        "Properties": {
-          "Code": {
-            "S3Bucket": "phenomics-artifacts-prod",
-            "S3Key": "pubmed-ingestion-worker-lambda-build-20180314-223514.zip"
-          },
-          "Role": {
-            "Fn::GetAtt": [
-              "PubmedIngestionWorkerLambdaRole",
-              "Arn"
-            ]
-          },
-          "Timeout": 300,
-          "Handler": "au.org.garvan.kccg.ingestion.lambda.Downloader",
-          "FunctionName": "pubmed-ingestion-worker-lambda",
-          "Runtime": "java8",
-          "MemorySize": 256,
-          "Tags": [
-            {
-              "Key": "Project",
-              "Value": "PhenomicsResearch"
-            },
-            {
-              "Key": "App",
-              "Value": "Pubmed-Ingestion"
-            },
-            {
-              "Key": "Contact",
-              "Value": "Ahmed"
-            }
-          ],
-          "Environment": {
-            "Variables": {
-              "ENV": "AWS",
-              "S3_BUCKET": "phenomics-pubmed-articles",
-              "REGION": "ap-southeast-2",
-              "DAYS": "2",
-              "BATCH_SIZE": "250",
-              "SEND_TO_PIPELINE": "true",
-              "PERSIST_IN_SOLR": "false",
-              "PERSIST_IN_S3": "false",
-              "PIPELINE_ENDPOINT": "http://52.62.200.154",
-              "WORKER_CONFIG_TABLE_NAME": "worker-config",
-              "TOTAL_WORKERS":"8"
-
-            }
-          }
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "PubmedIngestionWorkerLambda": {
+      "Properties": {
+        "Code": {
+          "S3Bucket": "phenomics-artifacts-prod",
+          "S3Key": "pubmed-ingestion-worker-lambda-build-20180320-114142.zip"
         },
-        "Type": "AWS::Lambda::Function"
-      },
-      "PubmedIngestionWorkerLambdaRole": {
-        "Properties": {
-          "AssumeRolePolicyDocument": {
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Service": [
-                    "lambda.amazonaws.com"
-                  ]
-                },
-                "Action": [
-                  "sts:AssumeRole"
-                ]
-              }
-            ]
+        "Role": {
+          "Fn::GetAtt": [
+            "PubmedIngestionWorkerLambdaRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 300,
+        "Handler": "au.org.garvan.kccg.ingestion.lambda.Downloader",
+        "FunctionName": "pubmed-ingestion-worker-lambda",
+        "Runtime": "java8",
+        "MemorySize": 256,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "PhenomicsResearch"
           },
-          "Path": "/",
-          "Policies": [
+          {
+            "Key": "App",
+            "Value": "Pubmed-Ingestion"
+          },
+          {
+            "Key": "Contact",
+            "Value": "Ahmed"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "ENV": "AWS",
+            "S3_BUCKET": "phenomics-pubmed-articles",
+            "REGION": "ap-southeast-2",
+            "DAYS": "2",
+            "BATCH_SIZE": "250",
+            "SEND_TO_PIPELINE": "true",
+            "PERSIST_IN_SOLR": "false",
+            "PERSIST_IN_S3": "false",
+            "PIPELINE_ENDPOINT": "http://52.62.200.154",
+            "WORKER_CONFIG_TABLE_NAME": "worker-config",
+            "TOTAL_WORKERS":"8"
+
+          }
+        }
+      },
+      "Type": "AWS::Lambda::Function"
+    },
+    "PubmedIngestionWorkerLambdaRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
             {
-              "PolicyName": "PubmedIngestionWorkerLambdaPolicy",
-              "PolicyDocument": {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Action": [
-                      "ec2:CreateNetworkInterface",
-                      "ec2:DescribeNetworkInterfaces",
-                      "ec2:DeleteNetworkInterface"
-                    ],
-                    "Resource": "*"
-                  },
-                  {
-                    "Effect": "Allow",
-                    "Action": [
-                      "s3:*"
-                    ],
-                    "Resource": "*"
-                  },
-                  {
-                    "Effect": "Allow",
-                    "Action": [
-                      "dynamodb:*"
-                    ],
-                    "Resource": "*"
-                  },
-                  {
-                    "Effect": "Allow",
-                    "Action": [
-                      "logs:CreateLogGroup",
-                      "logs:CreateLogStream",
-                      "logs:PutLogEvents",
-                      "logs:DescribeLogStreams"
-                    ],
-                    "Resource": [
-                      "arn:aws:logs:*:*:*"
-                    ]
-                  }
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
                 ]
-              }
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
             }
           ]
         },
-        "Type": "AWS::IAM::Role"
-      }
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "PubmedIngestionWorkerLambdaPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DeleteNetworkInterface"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": [
+                    "arn:aws:logs:*:*:*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
     }
   }
+}
