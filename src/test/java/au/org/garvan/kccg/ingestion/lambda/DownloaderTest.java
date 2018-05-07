@@ -4,11 +4,7 @@ import com.amazonaws.services.lambda.runtime.ClientContext;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
-
-import java.util.HashMap;
 
 
 /**
@@ -25,15 +21,15 @@ public class DownloaderTest {
 
 
     }
-
-    @Test
-    public void handleRequest() {
-        HashMap<String, Object> input = new HashMap<>();
-        input.put(Constants.WORKER_ID, "0");
-        input.put(Constants.IGNITION_CALL, false);
-        String result = testD.handleRequest(input, buildContext());
-        Assert.assertEquals(result, "OK");
-    }
+//
+//    @Test
+//    public void handleRequest() {
+//        HashMap<String, Object> input = new HashMap<>();
+//        input.put(Constants.WORKER_ID, "0");
+//        input.put(Constants.IGNITION_CALL, false);
+//        String result = testD.handleRequest(input, buildContext());
+//        Assert.assertEquals(result, "OK");
+//    }
 
 //    @Test
 //    public void callWithID() throws Exception {

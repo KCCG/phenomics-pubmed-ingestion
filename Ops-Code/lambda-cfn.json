@@ -5,7 +5,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "phenomics-artifacts-prod",
-          "S3Key": "pubmed-ingestion-worker-lambda-build-20180320-114142.zip"
+          "S3Key": "pubmed-ingestion-worker-lambda-build-20180406-104848.zip"
         },
         "Role": {
           "Fn::GetAtt": [
