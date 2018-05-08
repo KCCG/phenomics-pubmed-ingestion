@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport;
  */
 public class Article {
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static DateTimeFormatter formatterLongMonth = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
 
 
     @Getter
@@ -59,7 +60,25 @@ public class Article {
             isComplete = Boolean.FALSE;
 
             PMID = (int) inputObject.getJSONObject("MedlineCitation").getJSONObject("PMID").get("content");
-            articleTitle = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("ArticleTitle");
+            try {
+                articleTitle = (String) inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("ArticleTitle");
+            } catch (Exception e) {
+                JSONObject titleObject = inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("ArticleTitle");
+                if (titleObject.has("content")) {
+                    if (titleObject.get("content") instanceof JSONArray) {
+                        JSONArray titleArray = (JSONArray) titleObject.get("content");
+                        String tempTitle = "";
+                        for (Object obj : titleArray) {
+                            tempTitle = String.format("%s %s", tempTitle, obj);
+                        }
+                        articleTitle = tempTitle.trim();
+                    } else if (titleObject.get("content") instanceof String) {
+                        articleTitle = (String) titleObject.get("content");
+                    }
+                    else throw e;
+                } else
+                    throw e;
+            }
 
             Object lang = inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").get("Language");
             if (lang instanceof JSONArray )
@@ -73,10 +92,22 @@ public class Article {
                 authors = constructAuthors(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("AuthorList"));
             }
 
+            if (inputObject.getJSONObject("MedlineCitation").has("DateRevised")) {
+                dateRevised = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateRevised"));
+            }
+
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("ArticleDate")) {
                 articleDate = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("ArticleDate"));
+            } else if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Journal")) {
+                if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal").has("JournalIssue")) {
+                    if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal").getJSONObject("JournalIssue").has("PubDate")) {
+                        articleDate = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Journal").getJSONObject("JournalIssue").getJSONObject("PubDate"));
+                    }
+
+                }
             } else
-                articleDate = LocalDate.now();
+                articleDate = dateRevised;
+
 
             if (inputObject.getJSONObject("MedlineCitation").has("DateCreated")) {
                 dateCreated = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateCreated"));
@@ -85,9 +116,7 @@ public class Article {
                 // As date created is vanished from response so it is safe to assume article date as date created.
                 dateCreated = articleDate;
             }
-            if (inputObject.getJSONObject("MedlineCitation").has("DateRevised")) {
-                dateRevised = constructDate(inputObject.getJSONObject("MedlineCitation").getJSONObject("DateRevised"));
-            }
+
 
             if (inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").has("Abstract")) {
                 articleAbstract = constructAbstract(inputObject.getJSONObject("MedlineCitation").getJSONObject("Article").getJSONObject("Abstract"));
@@ -102,10 +131,16 @@ public class Article {
                 meshHeadingList = constructMeshHeadings(inputObject.getJSONObject("MedlineCitation").getJSONObject("MeshHeadingList"));
             }
 
-
+            if (articleDate == null) {
+                articleDate = LocalDate.now();
+            }
 
             if (!Strings.isNullOrEmpty(articleAbstract))
                 isComplete = Boolean.TRUE;
+            else {
+                System.out.println(String.format("Abstract missing in Article ID:%s", PMID));
+
+            }
 
         } catch (JSONException e) {
             System.out.println(String.format("JSON Error in Article ID:%s\n Exception: %s", PMID, e.toString()));
@@ -122,15 +157,25 @@ public class Article {
         this.articleDate = articleDate;
         this.articleTitle = articleTitle;
         this.articleAbstract = articleAbstract;
-        ;
         this.language = language;
         this.isComplete = isComplete;
 
     }
 
     private LocalDate constructDate(JSONObject jsonDate) {
-        String strDate = String.format("%s-%s-%s", jsonDate.get("Day"), jsonDate.get("Month"), jsonDate.get("Year"));
-        LocalDate containerDate = LocalDate.parse(strDate, formatter);
+
+        String day = jsonDate.has("Day") ? jsonDate.get("Day").toString() : "01";
+        String month = jsonDate.has("Month") ? jsonDate.get("Month").toString() : "01";
+        String year = jsonDate.has("Year") ? jsonDate.get("Year").toString() : "1900";
+        String strDate = String.format("%s-%s-%s", day, month, year);
+        LocalDate containerDate;
+        if (month.length() == 2)
+            containerDate = LocalDate.parse(strDate, formatter);
+        else if (month.length() == 3)
+            containerDate = LocalDate.parse(strDate, formatterLongMonth);
+        else
+            containerDate = LocalDate.now();
+
         return containerDate;
 
     }
@@ -142,14 +187,14 @@ public class Article {
         if (obj instanceof JSONArray) {
             for (Object innerObj : (JSONArray) obj) {
                 if (innerObj instanceof JSONObject) {
-                    if (((JSONObject) innerObj).has("content")){
+                    if (((JSONObject) innerObj).has("content")) {
                         Object deepObject = ((JSONObject) innerObj).get("content");
-                        if(deepObject instanceof String)
+                        if (deepObject instanceof String)
                             finalAbstract = finalAbstract.concat((String) deepObject);
-                        else if(deepObject instanceof JSONArray){
-                            String deepString ="";
-                            for(Object partialSent:(JSONArray) deepObject ){
-                                deepString = deepString.concat((String)partialSent);
+                        else if (deepObject instanceof JSONArray) {
+                            String deepString = "";
+                            for (Object partialSent : (JSONArray) deepObject) {
+                                deepString = deepString.concat((String) partialSent);
                             }
                             finalAbstract = finalAbstract.concat((String) deepString);
                         }
@@ -161,9 +206,24 @@ public class Article {
             }
         } else if (obj instanceof String) {
             finalAbstract = obj.toString();
-        }
-        return finalAbstract;
 
+        } else if (obj instanceof JSONObject) {
+            if (((JSONObject) obj).has("content")) {
+                Object deepObject = ((JSONObject) obj).get("content");
+                if (deepObject instanceof String)
+                    finalAbstract = finalAbstract.concat((String) deepObject);
+                else if (deepObject instanceof JSONArray) {
+                    String deepString = "";
+                    for (Object partialSent : (JSONArray) deepObject) {
+                        deepString = deepString.concat((String) partialSent);
+                    }
+                    finalAbstract = finalAbstract.concat((String) deepString);
+                }
+            }
+        }
+
+
+        return finalAbstract;
     }
 
     private List<Author> constructAuthors(JSONObject jsonAuthorsList) {
