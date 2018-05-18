@@ -1,0 +1,149 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "PubmedIngestionLambdaDev": {
+      "Properties": {
+        "Code": {
+          "S3Bucket": "phenomics-artifacts-prod",
+          "S3Key": "pubmed-ingestion-lambda-build-20180515-132626.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PubmedIngestionLambdaDevRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 300,
+        "Handler": "au.org.garvan.kccg.ingestion.lambda.Downloader",
+        "FunctionName": "pubmed-ingestion-lambda-dev",
+        "Runtime": "java8",
+        "MemorySize": 256,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "PhenomicsResearch"
+          },
+          {
+            "Key": "App",
+            "Value": "Pubmed-Ingestion"
+          },
+          {
+            "Key": "Contact",
+            "Value": "Ahmed"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "ENV": "AWS",
+            "REGION": "ap-southeast-2",
+            "DAYS": "2",
+            "BATCH_SIZE": "250",
+            "SEND_TO_PIPELINE": "true",
+            "PIPELINE_ENDPOINT": "https://phenomics-dev.kccg.garvan.org.au/search-engine"
+          }
+        }
+      },
+      "Type": "AWS::Lambda::Function"
+    },
+    "PubmedIngestionLambdaDevScheduleRule": {
+      "Properties": {
+        "Description": "ScheduledRule",
+        "ScheduleExpression": "cron(0 0 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "PubmedIngestionLambdaDev",
+                "Arn"
+              ]
+            },
+            "Id": "TargetFunctionDevV1"
+          }
+        ]
+      },
+      "Type": "AWS::Events::Rule"
+    },
+    "PermissionForEventsToInvokeLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "PubmedIngestionLambdaDev"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "PubmedIngestionLambdaDevScheduleRule",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "PubmedIngestionLambdaDevRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "PubmedIngestionLambdaDevPolicy",
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DeleteNetworkInterface"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogStreams"
+                  ],
+                  "Resource": [
+                    "arn:aws:logs:*:*:*"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    }
+  }
+}

@@ -5,4 +5,4 @@ set -e
 
 zipfile=$1
 
-aws s3api put-object --bucket phenomics-artifacts --key $zipfile  --body build/distributions/$zipfile
+aws s3api put-object --bucket phenomics-artifacts-prod  --key $zipfile  --body build/distributions/$zipfile

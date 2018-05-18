@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 public class PipelineHandler {
 
     private static String pipelineEndpoint = getPipelineURL();
-    private static String port = ":9080";
     private static String submitQuery = "/articles";
 
     public static void postArticles(List<Article> finalArticles) throws IOException {
@@ -32,7 +31,7 @@ public class PipelineHandler {
                 finalArticles.stream().forEach(x -> jsonArrayArticle.put(x.constructJsonObject()));
                 String jsonArrayString = jsonArrayArticle.toString();
 
-                HttpUrl.Builder httpBuilder = HttpUrl.parse(pipelineEndpoint + port + submitQuery).newBuilder();
+                HttpUrl.Builder httpBuilder = HttpUrl.parse(pipelineEndpoint + submitQuery).newBuilder();
                 RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), jsonArrayString);
                 Request request = new Request.Builder()
                         .post(body)
@@ -62,7 +61,7 @@ public class PipelineHandler {
                 .readTimeout(300L, TimeUnit.SECONDS)
                 .build();
 
-        HttpUrl.Builder httpBuilder = HttpUrl.parse(pipelineEndpoint + port + submitQuery).newBuilder();
+        HttpUrl.Builder httpBuilder = HttpUrl.parse(pipelineEndpoint + submitQuery).newBuilder();
         try {
 
             for (Article anArticle: finalArticles)
@@ -92,7 +91,7 @@ public class PipelineHandler {
 
     private static String getPipelineURL() {
         System.out.println("Getting Pipeline URL");
-        String URL = "http://localhost";
+        String URL = "http://localhost:9080";
         String env = ConfigLoader.getENV();
         if (env !=null && env.equals("AWS")) {
             String pipelineEndPoint = ConfigLoader.getPipelineEndpoint();

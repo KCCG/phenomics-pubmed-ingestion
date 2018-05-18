@@ -133,15 +133,6 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
                 }
 
-                if(ConfigLoader.shouldPersistInSolr()) {
-                    System.out.println(String.format("Calling Solr for batch:%d.",batchId));
-                    SolrHandler.postArticles(cleanedArticles);
-                }
-
-                if(ConfigLoader.shouldPersistInS3()){
-                    System.out.println(String.format("Calling S3 for batch:%d.",batchId));
-                    S3Handler.archiveArticles(cleanedArticles);
-                }
 
             }
             else
