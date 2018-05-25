@@ -69,7 +69,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
 
                 if (articleIDs.size()>0)
-                    processArticles(articleIDs);
+                    processArticles(articleIDs.subList(0,1000));
             }
 
         } catch (IOException e) {
