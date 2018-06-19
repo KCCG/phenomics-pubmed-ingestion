@@ -49,7 +49,7 @@ public class ConfigLoader {
             DAYS = System.getenv("DAYS");
         }
 
-        return Strings.isNullOrEmpty(DAYS) ? "2" : DAYS;
+        return Strings.isNullOrEmpty(DAYS) ? "3" : DAYS;
     }
 
 

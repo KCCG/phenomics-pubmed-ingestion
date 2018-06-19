@@ -9,10 +9,7 @@ import org.json.JSONObject;
 import org.json.XML;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -69,8 +66,10 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
 
                 if (articleIDs.size()>0)
-                    processArticles(articleIDs.subList(0,1000));
+//                    processArticles(Arrays.asList("29906225"));
+                    processArticles(articleIDs.subList(0,10));
             }
+
 
         } catch (IOException e) {
             System.out.println(String.format("Exception in lambda  %s.", e.toString()));
