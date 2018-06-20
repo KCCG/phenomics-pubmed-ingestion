@@ -67,7 +67,7 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
 
                 if (articleIDs.size()>0)
 //                    processArticles(Arrays.asList("29906225"));
-                    processArticles(articleIDs.subList(0,10));
+                    processArticles(articleIDs.subList(0,1));
             }
 
 

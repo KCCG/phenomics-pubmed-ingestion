@@ -91,7 +91,7 @@ public class PipelineHandler {
 
     private static String getPipelineURL() {
         System.out.println("Getting Pipeline URL");
-        String URL = "http://54.66.248.109:9000/";
+        String URL = "http://localhost:9080/";
         String env = ConfigLoader.getENV();
         if (env !=null && env.equals("AWS")) {
             String pipelineEndPoint = ConfigLoader.getPipelineEndpoint();
