@@ -119,7 +119,7 @@ public class Downloader implements RequestHandler<Map<String, Object>, String> {
         if (!isIgnitionCall) {
             for (int x = 0; x < batchSize; x++) {
                 tempID = tempID - skipStep;
-                if (tempID > 29000000)
+                if (tempID > 0)
                     generatedIDs.add(tempID);
                 else
                     break;
