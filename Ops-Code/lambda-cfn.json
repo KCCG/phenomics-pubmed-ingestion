@@ -44,7 +44,7 @@
             "PERSIST_IN_S3": "false",
             "PIPELINE_ENDPOINT": "http://13.236.77.94",
             "WORKER_CONFIG_TABLE_NAME": "worker-config",
-            "TOTAL_WORKERS":"8"
+            "TOTAL_WORKERS":"10"
 
           }
         }

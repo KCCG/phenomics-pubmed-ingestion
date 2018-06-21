@@ -70,15 +70,15 @@ public class ConfigLoader {
     }
 
     public static Integer getNumberOfWorkers() {
-        String tWorkers=  System.getenv("TOTAL_WORKERS");
-        if(tWorkers !=null)
+        String tWorkers = System.getenv("TOTAL_WORKERS");
+        if (tWorkers != null) {
             try {
                 TOTAL_WORKERS = Integer.parseInt(tWorkers);
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 System.out.println(String.format("Invalid Integer as batch size:%s", tWorkers));
 
             }
+        }
         return TOTAL_WORKERS;
 
     }
