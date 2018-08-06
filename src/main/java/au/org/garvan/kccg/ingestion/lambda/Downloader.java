@@ -66,8 +66,9 @@ public class Downloader implements RequestHandler<Map<String,Object>, String> {
                 System.out.println(String.format("Total fetched IDs: %d.", articleIDs.size()));
 
                 if (articleIDs.size()>0)
-//                    processArticles(Arrays.asList("29906225"));
-                    processArticles(articleIDs.subList(0,1));
+                      processArticles(Arrays.asList("30010220"));
+//                    processArticles(articleIDs);
+//                    processArticles(articleIDs.subList(250,1000));
             }
 
 
